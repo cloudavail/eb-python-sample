@@ -9,10 +9,10 @@ To create a basic Elastic Beanstalk stack in CloudFormation that:
 `aws cloudformation validate-template --template-body file://infra/eb-python-sample.yaml`
 
 # Create a eb-python-sample Stack
-`aws cloudformation create-stack --stack-name eb-python-sample --template-body file://infra/eb-python-sample.yaml`
+`aws cloudformation create-stack --capabilities CAPABILITY_NAMED_IAM --stack-name eb-python-sample --template-body file://infra/eb-python-sample.yaml`
 
 # Update a eb-python-sample Stack
-`aws cloudformation update-stack --stack-name eb-python-sample --template-body file://infra/eb-python-sample.yaml`
+`aws cloudformation update-stack --capabilities CAPABILITY_NAMED_IAM --stack-name eb-python-sample --template-body file://infra/eb-python-sample.yaml`
 
 # Delete a eb-python-sample Stack
 `aws cloudformation delete-stack --stack-name eb-python-sample`

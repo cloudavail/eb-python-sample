@@ -66,52 +66,85 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicInternetRouteTable
       SubnetId: !Ref PublicSubnet02
+
+  ElasticBeanstalkInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: aws-elasticbeanstalk-ec2-web-iamprofile
+      Path: /
+      Roles:
+        - !Ref ElasticBeanstalkIAMRole
   
-  # ElasticBeanstalkPythonApplication:
-  #   Type: AWS::ElasticBeanstalk::Application
-  #   Properties:
-  #     # note that if ApplicationName is set and is not unique you
-  #     # will not able able to run a given stack multiple times
-  #     ApplicationName: !Ref AWS::StackName
+  ElasticBeanstalkIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement: 
+          - Effect: Allow
+            Principal:
+              Service: 'ec2.amazonaws.com'
+            Action: 
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier'
+
+  ElasticBeanstalkPythonApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      # note that if ApplicationName is set and is not unique you
+      # will not able able to run a given stack multiple times
+      ApplicationName: eb-python-sample-cfn
   #           
-  # ElasticBeanstalkPythonConfigurationTemplate:
-  #   Type: AWS::ElasticBeanstalk::ConfigurationTemplate
-  #   Properties:
-  #     ApplicationName: !Ref ElasticBeanstalkPythonApplication
-  #     OptionSettings:
-  #       - Namespace: aws:autoscaling:asg
-  #         OptionName: MinSize
-  #         Value: 1
-  #       - Namespace: aws:autoscaling:asg
-  #         OptionName: MaxSize
-  #         Value: 1
-  #       - Namespace: aws:autoscaling:launchconfiguration
-  #         OptionName: EC2KeyName
-  #         Value: !Ref EC2KeyName
-  #       - Namespace: aws:autoscaling:launchconfiguration
-  #         OptionName: InstanceType
-  #         Value: t2.micro
-  #       - Namespace: aws:elasticbeanstalk:environment
-  #         OptionName: EnvironmentType
-  #         Value: LoadBalanced
-  #       - Namespace: aws:ec2:vpc
-  #         OptionName: VPCId
-  #         Value: !Ref VPC
-  #       - Namespace: aws:ec2:vpc
-  #         OptionName: Subnets
-  #         # Value: !Join turns the individual subnets into a string
-  #         Value: !Join [ ",", [ !Ref PublicSubnet01, !Ref PublicSubnet02 ] ]
-  #       - Namespace: aws:ec2:vpc
-  #         OptionName: AssociatePublicIpAddress
-  #         Value: true
-  #     SolutionStackName: 64bit Amazon Linux 2018.03 v2.7.7 running Python 2.7
+  ElasticBeanstalkPythonConfigurationTemplate:
+    Type: AWS::ElasticBeanstalk::ConfigurationTemplate
+    Properties:
+      ApplicationName: !Ref ElasticBeanstalkPythonApplication
+      OptionSettings:
+        - Namespace: aws:autoscaling:asg
+          OptionName: MinSize
+          Value: 1
+        - Namespace: aws:autoscaling:asg
+          OptionName: MaxSize
+          Value: 1
+        # - Namespace: aws:autoscaling:launchconfiguration
+        #   OptionName: EC2KeyName
+        #   Value: !Ref EC2KeyName
+        # - Namespace: aws:autoscaling:launchconfiguration
+        #   OptionName: InstanceType
+        #   Value: t2.micro
+        - Namespace: aws:autoscaling:launchconfiguration
+          # IAM Instance Profile that gets attached to Elasticbeanstalk instances that has 
+          # access to EC2 services
+          OptionName: IamInstanceProfile
+          Value: !Ref ElasticBeanstalkInstanceProfile
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: EnvironmentType
+          Value: LoadBalanced
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: LoadBalancerType
+          Value: application
+        - Namespace: aws:elasticbeanstalk:environment:process:default
+          OptionName: MatcherHTTPCode
+          Value: 200,301
+        - Namespace: aws:ec2:vpc
+          OptionName: VPCId
+          Value: !Ref VPC
+        - Namespace: aws:ec2:vpc
+          OptionName: Subnets
+          # Value: !Join turns the individual subnets into a string
+          Value: !Join [ ",", [ !Ref PublicSubnet01, !Ref PublicSubnet02 ] ]
+        - Namespace: aws:ec2:vpc
+          OptionName: AssociatePublicIpAddress
+          Value: true
+      SolutionStackName: 64bit Amazon Linux 2018.03 v2.7.7 running Python 2.7
 # 
-  # ElasticBeanstalkPythonEnvironment:
-  #   Type: AWS::ElasticBeanstalk::Environment
-  #   Properties:
-  #     ApplicationName: !Ref ElasticBeanstalkApplication
-  #     Description: ElasticBeanstalk Environment for Web
-  #     EnvironmentName: !Sub ${AWS::StackName}-Web
-  #     TemplateName: !Ref ElasticBeanstalkWebConfigurationTemplate
+  ElasticBeanstalkPythonEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName: !Ref ElasticBeanstalkPythonApplication
+      Description: ElasticBeanstalk Environment for cfn
+      EnvironmentName: !Sub ${AWS::StackName}-cfn
+      TemplateName: !Ref ElasticBeanstalkPythonConfigurationTemplate
 
 Outputs: {}
